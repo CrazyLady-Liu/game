@@ -156,6 +156,72 @@
             loaded: true
         };
 
+        // ==================== 爆炸动画模块 ====================
+        const explosions = {
+            list: [],
+
+            reset() {
+                this.list = [];
+            },
+
+            create(x, y, type) {
+                this.list.push({
+                    x: x,
+                    y: y,
+                    type: type,
+                    frame: 0,
+                    maxFrames: 15,
+                    particles: []
+                });
+                for (let i = 0; i < 8; i++) {
+                    this.list[this.list.length - 1].particles.push({
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * 6,
+                        vy: (Math.random() - 0.5) * 6,
+                        size: 3 + Math.random() * 4,
+                        color: type === 2 ? '#ff6b35' : type === 1 ? '#ff9f43' : '#ffcc5c'
+                    });
+                }
+            },
+
+            update() {
+                for (let i = this.list.length - 1; i >= 0; i--) {
+                    this.list[i].frame++;
+                    for (let j = 0; j < this.list[i].particles.length; j++) {
+                        this.list[i].particles[j].x += this.list[i].particles[j].vx;
+                        this.list[i].particles[j].y += this.list[i].particles[j].vy;
+                    }
+                    if (this.list[i].frame >= this.list[i].maxFrames) {
+                        this.list.splice(i, 1);
+                    }
+                }
+            },
+
+            draw() {
+                for (const exp of this.list) {
+                    const progress = exp.frame / exp.maxFrames;
+                    const alpha = 1 - progress;
+                    
+                    for (const p of exp.particles) {
+                        ctx.fillStyle = p.color;
+                        ctx.globalAlpha = alpha;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size * (1 - progress * 0.5), 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    
+                    ctx.globalAlpha = 0.5 * alpha;
+                    const color = exp.type === 2 ? '#ffcc00' : '#fff';
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(exp.x, exp.y, 20 * (1 - progress * 0.3), 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+            }
+        };
+
         // ==================== 状态模块 ====================
         const gameStateManager = {
             setState(newState) {
@@ -188,31 +254,74 @@
             draw() {
                 ctx.save();
                 
+                const px = this.x;
+                const py = this.y;
+                
                 ctx.fillStyle = '#4a9fff';
                 ctx.beginPath();
-                ctx.moveTo(this.x + 25, this.y);
-                ctx.lineTo(this.x + 50, this.y + 40);
-                ctx.lineTo(this.x + 35, this.y + 40);
-                ctx.lineTo(this.x + 35, this.y + 50);
-                ctx.lineTo(this.x + 15, this.y + 50);
-                ctx.lineTo(this.x + 15, this.y + 40);
-                ctx.lineTo(this.x, this.y + 40);
+                ctx.moveTo(px + 25, py);
+                ctx.lineTo(px + 50, py + 40);
+                ctx.lineTo(px + 35, py + 40);
+                ctx.lineTo(px + 35, py + 50);
+                ctx.lineTo(px + 15, py + 50);
+                ctx.lineTo(px + 15, py + 40);
+                ctx.lineTo(px, py + 40);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.fillStyle = '#2a6fbf';
+                ctx.beginPath();
+                ctx.moveTo(px + 5, py + 25);
+                ctx.lineTo(px + 0, py + 40);
+                ctx.lineTo(px + 10, py + 40);
+                ctx.lineTo(px + 15, py + 28);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.moveTo(px + 45, py + 25);
+                ctx.lineTo(px + 50, py + 40);
+                ctx.lineTo(px + 40, py + 40);
+                ctx.lineTo(px + 35, py + 28);
                 ctx.closePath();
                 ctx.fill();
                 
                 ctx.fillStyle = '#8ac4ff';
                 ctx.beginPath();
-                ctx.ellipse(this.x + 25, this.y + 20, 8, 12, 0, 0, Math.PI * 2);
+                ctx.ellipse(px + 25, py + 20, 8, 12, 0, 0, Math.PI * 2);
                 ctx.fill();
                 
-                if (Math.random() > 0.3) {
-                    ctx.fillStyle = '#ff6b35';
-                    ctx.beginPath();
-                    ctx.moveTo(this.x + 20, this.y + 50);
-                    ctx.lineTo(this.x + 25, this.y + 60 + Math.random() * 10);
-                    ctx.lineTo(this.x + 30, this.y + 50);
-                    ctx.fill();
-                }
+                ctx.fillStyle = '#c4e8ff';
+                ctx.beginPath();
+                ctx.ellipse(px + 23, py + 17, 3, 5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                const flameHeight = 8 + Math.random() * 12;
+                const flameOffset = Math.sin(Date.now() * 0.015) * 2;
+                
+                ctx.fillStyle = '#ffcc00';
+                ctx.beginPath();
+                ctx.moveTo(px + 22, py + 50);
+                ctx.lineTo(px + 25 + flameOffset, py + 50 + flameHeight * 0.6);
+                ctx.lineTo(px + 28, py + 50);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.fillStyle = '#ff9900';
+                ctx.beginPath();
+                ctx.moveTo(px + 20, py + 50);
+                ctx.lineTo(px + 25 - flameOffset, py + 50 + flameHeight * 0.8);
+                ctx.lineTo(px + 30, py + 50);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.fillStyle = '#ff6b35';
+                ctx.beginPath();
+                ctx.moveTo(px + 18, py + 50);
+                ctx.lineTo(px + 25, py + 50 + flameHeight);
+                ctx.lineTo(px + 32, py + 50);
+                ctx.closePath();
+                ctx.fill();
                 
                 ctx.restore();
             },
@@ -502,6 +611,7 @@
                                 enemy.alive = false;
                                 bullets.playerBullets.splice(i, 1);
                                 scoreSystem.addScore(10 * (enemy.type + 1));
+                                explosions.create(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemy.type);
                                 
                                 if (enemies.getAliveEnemies().length === 0) {
                                     endGame();
@@ -582,12 +692,15 @@
 
             init() {
                 this.list = [];
-                for (let i = 0; i < 100; i++) {
+                for (let i = 0; i < 150; i++) {
                     this.list.push({
                         x: Math.random() * CONFIG.WIDTH,
                         y: Math.random() * CONFIG.HEIGHT,
-                        size: 1 + Math.random() * 2,
-                        speed: 0.5 + Math.random() * 1
+                        size: 0.5 + Math.random() * 2.5,
+                        speed: 0.2 + Math.random() * 0.8,
+                        twinkle: Math.random() * Math.PI * 2,
+                        twinkleSpeed: 0.02 + Math.random() * 0.05,
+                        color: Math.random() > 0.7 ? '#8ac4ff' : '#ffffff'
                     });
                 }
             },
@@ -595,20 +708,26 @@
             update() {
                 for (const star of this.list) {
                     star.y += star.speed;
+                    star.twinkle += star.twinkleSpeed;
                     if (star.y > CONFIG.HEIGHT) {
                         star.y = 0;
                         star.x = Math.random() * CONFIG.WIDTH;
+                        star.twinkle = Math.random() * Math.PI * 2;
                     }
                 }
             },
 
             draw() {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
                 for (const star of this.list) {
+                    const twinkle = (Math.sin(star.twinkle) + 1) / 2;
+                    const alpha = 0.3 + twinkle * 0.7;
+                    ctx.fillStyle = star.color;
+                    ctx.globalAlpha = alpha;
                     ctx.beginPath();
                     ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
                     ctx.fill();
                 }
+                ctx.globalAlpha = 1;
             }
         };
 
@@ -625,6 +744,7 @@
             bullets.reset();
             enemies.reset();
             scoreSystem.reset();
+            explosions.reset();
             
             gameLoop();
         }
@@ -673,6 +793,7 @@
                 player.update();
                 bullets.update();
                 enemies.update();
+                explosions.update();
 
                 if (collision.checkAll()) {
                     endGame();
@@ -684,6 +805,7 @@
             enemies.draw();
             bullets.draw();
             player.draw();
+            explosions.draw();
 
             animationId = requestAnimationFrame(gameLoop);
         }
